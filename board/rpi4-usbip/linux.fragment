@@ -7,3 +7,11 @@ CONFIG_USBIP_HOST=m
 # Hardware watchdog, kicked by systemd (see system.conf.d/watchdog.conf)
 CONFIG_WATCHDOG=y
 CONFIG_BCM2835_WDT=y
+
+# USB serial drivers for ports published through ser2net
+CONFIG_USB_ACM=m
+CONFIG_USB_SERIAL=m
+CONFIG_USB_SERIAL_FTDI_SIO=m
+CONFIG_USB_SERIAL_CP210X=m
+CONFIG_USB_SERIAL_CH341=m
+CONFIG_USB_SERIAL_PL2303=m

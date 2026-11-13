@@ -8,7 +8,9 @@ EXT_DIR=$(cd "$BOARD_DIR/../.." && pwd)
 
 wants=$TARGET_DIR/etc/systemd/system/multi-user.target.wants
 mkdir -p "$wants"
-ln -sf /usr/lib/systemd/system/usbipd.service "$wants/usbipd.service"
+for unit in usbipd.service ser2net.service; do
+    ln -sf "/usr/lib/systemd/system/$unit" "$wants/$unit"
+done
 
 # Root has no password; SSH (dropbear) only accepts keys. Put yours in
 # local/authorized_keys (git-ignored) to bake them into the image.

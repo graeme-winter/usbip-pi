@@ -1,0 +1,14 @@
+[Unit]
+Description=Serial port to network proxy (ser2net)
+After=network.target systemd-modules-load.service
+
+[Service]
+# Connections come from /etc/usbip-pi/devices.conf; restart to apply edits.
+# Deliberately no ExecReload: see /usr/bin/ser2net-gen.
+ExecStartPre=/usr/bin/ser2net-gen
+ExecStart=/usr/bin/ser2net -n -c /run/ser2net/ser2net.yaml
+Restart=always
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target

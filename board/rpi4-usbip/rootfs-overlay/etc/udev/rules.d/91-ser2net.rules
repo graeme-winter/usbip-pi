@@ -1,0 +1,6 @@
+# USB serial ports routed to "serial" in /etc/usbip-pi/devices.conf get a
+# stable link /dev/serial/by-tcp/<port>, which the matching ser2net
+# connection opens when a client connects. Nothing else to do on hotplug:
+# ser2net is configured for every rule at start and is never reloaded.
+SUBSYSTEM=="tty", KERNEL=="ttyUSB[0-9]*|ttyACM[0-9]*", ACTION=="add", \
+  PROGRAM="/usr/bin/ser2net-gen --link %k", SYMLINK+="%c"
