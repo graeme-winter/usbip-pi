@@ -1,0 +1,15 @@
+# Keep a remote USB/IP device attached.
+#   systemctl enable --now usbip-client@usbip-pi.lan:1-1.2
+[Unit]
+Description=USB/IP device %i
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+ExecStart=/usr/local/sbin/usbip-keepalive run %i
+ExecStopPost=/usr/local/sbin/usbip-keepalive detach %i
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

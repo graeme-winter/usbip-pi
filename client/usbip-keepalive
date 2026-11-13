@@ -1,0 +1,66 @@
+#!/bin/sh
+# usbip-keepalive run    HOST:BUSID
+# usbip-keepalive detach HOST:BUSID
+#
+# Keep one remote USB/IP device attached: reattach after the Pi reboots,
+# the network drops, or the device is unplugged and plugged back in.
+# Intended to run under usbip-client@HOST:BUSID.service.
+set -u
+
+USBIP=${USBIP:-usbip}
+INTERVAL=${USBIP_POLL_INTERVAL:-5}
+
+usage() { echo "usage: $0 run|detach HOST:BUSID" >&2; exit 2; }
+
+[ $# -eq 2 ] || usage
+cmd=$1
+host=${2%:*}
+busid=${2##*:}
+[ -n "$host" ] && [ -n "$busid" ] && [ "$host" != "$2" ] || usage
+
+# Print the local vhci port number(s) carrying HOST/BUSID, if any.
+# "usbip port" prints e.g.
+#   Port 00: <Port in Use> at High Speed(480Mbps)
+#          ...
+#          2-1 -> usbip://pi.lan:3240/1-1.2
+find_port() {
+    "$USBIP" port 2>/dev/null | awk -v h="usbip://$host:" -v b="/$busid" '
+        /^Port [0-9]+:/ { p = $2; sub(/:$/, "", p); next }
+        index($NF, h) == 1 &&
+        substr($NF, length($NF) - length(b) + 1) == b { print p + 0 }'
+}
+
+detach() {
+    for p in $(find_port); do
+        "$USBIP" detach -p "$p" >/dev/null 2>&1 && echo "detached port $p"
+    done
+    return 0
+}
+
+run() {
+    modprobe vhci-hcd 2>/dev/null || true
+    state=
+    trap 'detach; exit 0' INT TERM
+    while :; do
+        if [ -n "$(find_port)" ]; then
+            new=attached
+        elif "$USBIP" attach -r "$host" -b "$busid" >/dev/null 2>&1; then
+            new=attached
+        else
+            new=waiting
+        fi
+        # Log transitions only, not every poll.
+        if [ "$new" != "$state" ]; then
+            echo "$host:$busid $new"
+            state=$new
+        fi
+        sleep "$INTERVAL" &
+        wait $!
+    done
+}
+
+case $cmd in
+    run) run ;;
+    detach) detach ;;
+    *) usage ;;
+esac
