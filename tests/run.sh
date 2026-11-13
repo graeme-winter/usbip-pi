@@ -5,7 +5,7 @@
 set -eu
 HERE=$(cd "$(dirname "$0")" && pwd)
 ROOT=$(cd "$HERE/.." && pwd)
-EXPORT=$ROOT/board/rpi4-usbip/rootfs-overlay/usr/sbin/usbip-export
+EXPORT=$ROOT/board/rpi4-usbip/rootfs-overlay/usr/bin/usbip-export
 KEEPALIVE=$ROOT/client/usbip-keepalive
 
 T=$(mktemp -d); trap 'rm -rf "$T"' EXIT
@@ -105,5 +105,18 @@ check "run retries while down"    yes "$([ "$(wc -l < "$T/attached")" -ge 2 ] &&
 check "waiting logged once"       1 "$(grep -c waiting "$T/run.log")"
 
 check "bad arg rejected"          2 "$(${SH:-sh} "$KEEPALIVE" run nocolon >/dev/null 2>&1 || echo $?)"
+
+# Overlay must suit merged /usr + merged /usr/bin (forced by systemd).
+if [ -n "${BUILDROOT:-}" ]; then
+    if "$BUILDROOT/support/scripts/check-merged" -t overlay -u -b \
+        "$ROOT/board/rpi4-usbip/rootfs-overlay" >/dev/null; then
+        echo "ok   overlay passes check-merged"
+    else
+        echo "FAIL overlay fails check-merged"; fail=1
+    fi
+else
+    [ -e "$ROOT/board/rpi4-usbip/rootfs-overlay/usr/sbin" ] && {
+        echo "FAIL overlay has usr/sbin (must be merged into usr/bin)"; fail=1; }
+fi
 
 exit $fail

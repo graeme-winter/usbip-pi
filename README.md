@@ -111,6 +111,8 @@ Windows clients can use usbip-win2; the reattach logic here is Linux-only.
       linux.fragment              USBIP_HOST, watchdog
       post-build.sh               enable usbipd, install SSH keys
       rootfs-overlay/             udev rule, units, usbip-export, sysctl
+                                  (no usr/sbin: systemd forces merged /usr/bin)
     patches/usbip/                usbipd keepalive patch (via BR2_GLOBAL_PATCH_DIR)
     client/                       usbip-keepalive, systemd template, installer
-    tests/run.sh                  offline tests (SH="busybox sh" to test ash)
+    tests/run.sh                  offline tests (SH="busybox sh" to test ash;
+                                  BUILDROOT=... also runs check-merged)

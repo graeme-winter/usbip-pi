@@ -3,7 +3,7 @@ Description=USB/IP server daemon
 After=network.target systemd-modules-load.service
 
 [Service]
-ExecStart=/usr/sbin/usbipd
+ExecStart=/usr/bin/usbipd
 Restart=always
 RestartSec=2
 
