@@ -1,0 +1,5 @@
+# Offer every newly attached non-hub USB device to usbip-export@.service,
+# which decides from /etc/usbip/export.conf whether to bind it.
+ACTION=="add", SUBSYSTEM=="usb", ENV{DEVTYPE}=="usb_device", \
+  ATTR{bDeviceClass}!="09", \
+  TAG+="systemd", ENV{SYSTEMD_WANTS}+="usbip-export@%k.service"

@@ -1,0 +1,11 @@
+[Unit]
+Description=USB/IP server daemon
+After=network.target systemd-modules-load.service
+
+[Service]
+ExecStart=/usr/sbin/usbipd
+Restart=always
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target

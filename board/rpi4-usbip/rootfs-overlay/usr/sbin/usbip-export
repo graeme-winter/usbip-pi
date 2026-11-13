@@ -1,0 +1,57 @@
+#!/bin/sh
+# usbip-export BUSID
+#
+# Bind a USB device to usbip-host if /etc/usbip/export.conf allows it.
+# Run by usbip-export@BUSID.service, which udev starts on hotplug.
+set -eu
+
+SYSFS=${USBIP_SYSFS:-/sys/bus/usb/devices}
+CONF=${USBIP_EXPORT_CONF:-/etc/usbip/export.conf}
+USBIP=${USBIP:-usbip}
+
+busid=${1:?usage: usbip-export BUSID}
+dev=$SYSFS/$busid
+
+[ -d "$dev" ] || { echo "$busid: gone"; exit 0; }
+
+vid=$(cat "$dev/idVendor")
+pid=$(cat "$dev/idProduct")
+
+# Hubs carry the topology; exporting one would take its children with it.
+if [ "$(cat "$dev/bDeviceClass" 2>/dev/null)" = 09 ]; then
+    echo "$busid ($vid:$pid): hub, not exported"
+    exit 0
+fi
+
+if [ -L "$dev/driver" ] && \
+   [ "$(basename "$(readlink "$dev/driver")")" = usbip-host ]; then
+    echo "$busid ($vid:$pid): already exported"
+    exit 0
+fi
+
+decision=deny
+if [ -r "$CONF" ]; then
+    while read -r rule _rest; do
+        case $rule in ''|'#'*) continue ;; esac
+        verdict=allow
+        case $rule in '!'*) verdict=deny; rule=${rule#!} ;; esac
+        case $rule in
+            port:*) subject=port:$busid ;;
+            *)      subject=$vid:$pid ;;
+        esac
+        # $rule unquoted on purpose: it is a glob pattern
+        # shellcheck disable=SC2254
+        case $subject in
+            $rule) decision=$verdict; break ;;
+        esac
+    done < "$CONF"
+fi
+
+if [ "$decision" != allow ]; then
+    echo "$busid ($vid:$pid): not exported by policy"
+    exit 0
+fi
+
+modprobe usbip-host 2>/dev/null || true
+"$USBIP" bind -b "$busid"
+echo "$busid ($vid:$pid): exported"

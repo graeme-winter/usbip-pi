@@ -1,0 +1,8 @@
+[Unit]
+Description=Export USB device %i over USB/IP
+After=systemd-modules-load.service
+StartLimitIntervalSec=0
+
+[Service]
+Type=oneshot
+ExecStart=/usr/sbin/usbip-export %i
