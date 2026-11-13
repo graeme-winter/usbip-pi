@@ -1,0 +1,31 @@
+From: Graeme Winter <graeme.winter@gmail.com>
+Subject: [PATCH] usbip: usbipd: enable TCP keepalive on exported connections
+
+The client enables SO_KEEPALIVE in usbip_net_tcp_connect(), but usbipd
+never does so on the accepted connection. If a client disappears without
+closing its socket (power loss, cable pulled, network partition) the stub
+driver keeps the device in the "used" state indefinitely, and it cannot
+be imported again until it is unbound and rebound by hand.
+
+Enable keepalive on the server side as well. Together with short
+net.ipv4.tcp_keepalive_* settings the dead connection is detected, the
+socket errors out in the stub driver, and the device becomes available
+for import again.
+
+Signed-off-by: Graeme Winter <graeme.winter@gmail.com>
+---
+ tools/usb/usbip/src/usbipd.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/tools/usb/usbip/src/usbipd.c b/tools/usb/usbip/src/usbipd.c
+index 48398a7..d89633d 100644
+--- a/tools/usb/usbip/src/usbipd.c
++++ b/tools/usb/usbip/src/usbipd.c
+@@ -119,6 +119,7 @@ static int recv_request_import(int sockfd)
+ 	if (found) {
+ 		/* should set TCP_NODELAY for usbip */
+ 		usbip_net_set_nodelay(sockfd);
++		usbip_net_set_keepalive(sockfd);
+ 
+ 		/* export device needs a TCP/IP socket descriptor */
+ 		status = usbip_export_device(edev, sockfd);
