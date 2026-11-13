@@ -1,0 +1,2 @@
+name: USBIP_PI
+desc: USB/IP appliance for Raspberry Pi 4 (exports USB devices over Ethernet)

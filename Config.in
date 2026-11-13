@@ -1,0 +1,2 @@
+# No custom packages: the appliance uses Buildroot's upstream "usbip"
+# package. Add package/*/Config.in entries here if that changes.
