@@ -22,4 +22,7 @@ BR2_PACKAGE_USBUTILS=y
 BR2_PACKAGE_DROPBEAR=y
 BR2_PACKAGE_SER2NET=y
 
+# Onboard Ethernet is named end0 with current systemd, not eth0
+BR2_SYSTEM_DHCP="end0"
+
 BR2_TARGET_ROOTFS_EXT2_SIZE="256M"
